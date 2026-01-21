@@ -1,11 +1,8 @@
-torch>=2.0.0
-# torch_xla is required for TPU support.
-# Install via: pip install torch-xla -f https://storage.googleapis.com/tpu-pytorch/wheels/tpuv2/torch_xla-2.0-cp310-cp310-linux_x86_64.whl
-# (Adjust version/URL based on your TPU environment)
+torch>=2.1.0
+torch-xla>=2.1.0
 transformers>=4.40.0
 diffusers>=0.27.0
 accelerate>=0.28.0
-flash-attn>=2.5.0
 peft>=0.10.0
 datasets>=2.18.0
 wandb>=0.16.0
