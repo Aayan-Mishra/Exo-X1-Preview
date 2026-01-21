@@ -41,9 +41,9 @@ class FLUXTrajectoryDataset(Dataset):
         dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
         pipeline = Flux2Pipeline.from_pretrained(
             FLUX_MODEL_NAME,
-            torch_dtype=dtype,
-            device_map="cpu"
+            torch_dtype=dtype
         )
+        pipeline.to("cpu")
 
         # Load captions (from prompt.json if it exists, else use GOLDEN_25)
         prompt_json_path = PROJECT_ROOT / "prompt.json"
@@ -136,9 +136,9 @@ def generate_synthetic_images(num_images=1000):
     dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
     pipeline = Flux2Pipeline.from_pretrained(
         FLUX_MODEL_NAME,
-        torch_dtype=dtype,
-        device_map="cpu"
+        torch_dtype=dtype
     )
+    pipeline.to("cpu")
     pipeline.enable_model_cpu_offload()
 
     prompts = ["A beautiful landscape"] * num_images
