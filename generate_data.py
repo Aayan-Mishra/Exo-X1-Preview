@@ -42,7 +42,7 @@ class FLUXTrajectoryDataset(Dataset):
         pipeline = DiffusionPipeline.from_pretrained(
             FLUX_MODEL_NAME,
             torch_dtype=dtype,
-            device_map="auto"
+            device_map="cpu"
         )
 
         # Load captions (from prompt.json if it exists, else use GOLDEN_25)
@@ -137,7 +137,7 @@ def generate_synthetic_images(num_images=1000):
     pipeline = DiffusionPipeline.from_pretrained(
         FLUX_MODEL_NAME,
         torch_dtype=dtype,
-        device_map="auto"
+        device_map="cpu"
     )
     pipeline.enable_model_cpu_offload()
 
