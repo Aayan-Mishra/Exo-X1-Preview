@@ -6,7 +6,7 @@ Generates 1M FLUX trajectories with noisy→clean latents and synthetic captions
 import torch
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from diffusers import FluxPipeline
+from diffusers import DiffusionPipeline
 from transformers import CLIPTokenizer
 import os
 import json
@@ -36,10 +36,14 @@ class FLUXTrajectoryDataset(Dataset):
         print(f"Generating {self.num_trajectories} trajectories...")
 
         # Load FLUX pipeline for latent generation
-        pipeline = FluxPipeline.from_pretrained(FLUX_MODEL_NAME, torch_dtype=torch.float16)
-        pipeline.vae.requires_grad_(False)
-        pipeline.text_encoder.requires_grad_(False)
-        pipeline.transformer.requires_grad_(False)
+
+        # Use DiffusionPipeline for official FLUX usage, with TPU/GPU/CPU compatibility
+        dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
+        pipeline = DiffusionPipeline.from_pretrained(
+            FLUX_MODEL_NAME,
+            torch_dtype=dtype,
+            device_map="auto"
+        )
 
         # Load captions (from prompt.json if it exists, else use GOLDEN_25)
         prompt_json_path = PROJECT_ROOT / "prompt.json"
@@ -60,6 +64,7 @@ class FLUXTrajectoryDataset(Dataset):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cuda":
             pipeline.to(device)
+        # For TPU, device_map="auto" will handle placement
 
         for i in tqdm(range(self.num_trajectories)):
             # Random caption
@@ -70,7 +75,7 @@ class FLUXTrajectoryDataset(Dataset):
             with torch.no_grad():
                 # Get the "clean" result from FLUX as target
                 clean_latent = pipeline(
-                    caption, 
+                    prompt=caption,
                     num_inference_steps=2, # Fast ground truth
                     output_type="latent"
                 ).images[0] # (16, 64, 64)
@@ -127,14 +132,20 @@ def create_trajectory_dataloader(batch_size=1, num_trajectories=10000):
 
 def generate_synthetic_images(num_images=1000):
     """Generate synthetic images using FLUX for testing"""
-    pipeline = FluxPipeline.from_pretrained(FLUX_MODEL_NAME, torch_dtype=torch.float16)
+
+    dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
+    pipeline = DiffusionPipeline.from_pretrained(
+        FLUX_MODEL_NAME,
+        torch_dtype=dtype,
+        device_map="auto"
+    )
     pipeline.enable_model_cpu_offload()
 
     prompts = ["A beautiful landscape"] * num_images
 
     images = []
-    for prompt in tqdm(prompts):
-        image = pipeline(prompt, num_inference_steps=20, guidance_scale=7.5).images[0]
+    for prompt_text in tqdm(prompts):
+        image = pipeline(prompt=prompt_text, num_inference_steps=20, guidance_scale=7.5).images[0]
         images.append(image)
 
     # Save images
