@@ -6,7 +6,7 @@ Generates 1M FLUX trajectories with noisy→clean latents and synthetic captions
 import torch
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from diffusers import DiffusionPipeline
+from diffusers import Flux2Pipeline
 from transformers import CLIPTokenizer
 import os
 import json
@@ -39,7 +39,7 @@ class FLUXTrajectoryDataset(Dataset):
 
         # Use DiffusionPipeline for official FLUX usage, with TPU/GPU/CPU compatibility
         dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
-        pipeline = DiffusionPipeline.from_pretrained(
+        pipeline = Flux2Pipeline.from_pretrained(
             FLUX_MODEL_NAME,
             torch_dtype=dtype,
             device_map="cpu"
@@ -134,7 +134,7 @@ def generate_synthetic_images(num_images=1000):
     """Generate synthetic images using FLUX for testing"""
 
     dtype = torch.bfloat16 if BF16_TRAINING else torch.float16
-    pipeline = DiffusionPipeline.from_pretrained(
+    pipeline = Flux2Pipeline.from_pretrained(
         FLUX_MODEL_NAME,
         torch_dtype=dtype,
         device_map="cpu"
